@@ -18,10 +18,26 @@ const server = http.createServer(app);
 //이렇게 함으로써 websocket 서버가 http서버 위에서 구동됨
 const wss = new WebSocket.Server({ server });
 
-function handleConnection(socket) {
-  console.log(socket);
-}
+const sockets = [];
 
-wss.on("connection", handleConnection);
+wss.on("connection", (socket) => {
+  sockets.push(socket);
+  //각 socket에 close, message 등의 이벤트 리스너를 등록함
+  //server에 등록하지 않았음에 유의!
+  console.log("Connected to Browser");
+
+  socket.on("close", () => {
+    console.log("Disconnected from the Browser : ❌");
+  });
+
+  socket.on("message", (message) => {
+    const translatedMessageData = message.toString("utf-8");
+    sockets.forEach((aSocket) => {
+      aSocket.send(translatedMessageData);
+    });
+  });
+
+  socket.send("hello!");
+});
 
 server.listen(3000, handleListen);
