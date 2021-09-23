@@ -22,6 +22,8 @@ const sockets = [];
 
 wss.on("connection", (socket) => {
   sockets.push(socket);
+  socket["nickname"] = "Anon";
+
   //각 socket에 close, message 등의 이벤트 리스너를 등록함
   //server에 등록하지 않았음에 유의!
   console.log("Connected to Browser");
@@ -30,14 +32,23 @@ wss.on("connection", (socket) => {
     console.log("Disconnected from the Browser : ❌");
   });
 
-  socket.on("message", (message) => {
-    const translatedMessageData = message.toString("utf-8");
-    sockets.forEach((aSocket) => {
-      aSocket.send(translatedMessageData);
-    });
+  socket.on("message", (msg) => {
+    const message = JSON.parse(msg);
+    switch (message.type) {
+      case "new_message":
+        sockets.forEach((aSocket) => {
+          aSocket.send(`${socket.nickname}: ${message.payload}`);
+        });
+        break;
+      case "nickname":
+        socket["nickname"] = message.payload;
+        break;
+      default:
+        console.log(message.payload);
+    }
   });
 
-  socket.send("hello!");
+  socket.send(`${socket.nickname}: hello!`);
 });
 
 server.listen(3000, handleListen);
