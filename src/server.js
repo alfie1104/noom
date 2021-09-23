@@ -1,6 +1,7 @@
 import http from "http";
 import express from "express";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
+//import WebSocket from "ws";
 
 const app = express();
 
@@ -14,13 +15,18 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handleListen = () => console.log("Listening on http://localhost:3000");
 
 //http서버와 web socket 서버를 모두 같은 포트에서 동시에 돌리기 위해 http를 이용해서 서버생성하였음
-const server = http.createServer(app);
-//이렇게 함으로써 websocket 서버가 http서버 위에서 구동됨
-const wss = new WebSocket.Server({ server });
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
+wsServer.on("connection", (socket) => {
+  console.log(socket);
+});
+/*
+//이렇게 함으로써 websocket 서버가 http서버 위에서 구동됨
+const wsServer = new WebSocket.Server({ httpServer });
 const sockets = [];
 
-wss.on("connection", (socket) => {
+wsServer.on("connection", (socket) => {
   sockets.push(socket);
   socket["nickname"] = "Anon";
 
@@ -50,5 +56,6 @@ wss.on("connection", (socket) => {
 
   socket.send(`${socket.nickname}: hello!`);
 });
+*/
 
-server.listen(3000, handleListen);
+httpServer.listen(3000, handleListen);
