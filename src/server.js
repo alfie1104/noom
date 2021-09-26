@@ -19,7 +19,12 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-  console.log(socket);
+  socket.on("enter_room", (roomName, done) => {
+    console.log(roomName);
+    setTimeout(() => {
+      done("hello from backend");
+    }, 15000);
+  });
 });
 /*
 //이렇게 함으로써 websocket 서버가 http서버 위에서 구동됨
