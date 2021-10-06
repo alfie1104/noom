@@ -13,6 +13,7 @@ let myStream;
 let muted = false;
 let cameraOff = false;
 let roomName;
+let myPeerConnection;
 
 async function getCameras() {
   try {
@@ -100,10 +101,11 @@ camerasSelect.addEventListener("input", handleCameraChange);
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
-function startMedia() {
+async function startMedia() {
   welcome.hidden = true;
   call.hidden = false;
-  getMedia();
+  await getMedia();
+  makeConnection();
 }
 
 function handleWelcomeSubmit(event) {
@@ -117,7 +119,33 @@ function handleWelcomeSubmit(event) {
 welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 // Socket Code
-socket.on("welcome", () => {
-  console.log("someone joined");
+socket.on("welcome", async () => {
+  /*
+  [Peer A에서 진행 - 먼저 접속한 사람 -]
+  1. getUserMedia()
+  2. addStream() : 지금은 이거 대신 addTrack을 씀
+  3. createOffer() : Offer 생성(이걸 이용해서 다른 사용자와 연결됨)
+  4. setLocalDescription()
+  5. send offer to other user
+  */
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer);
+  socket.emit("offer", offer, roomName);
   //또 다른 유저가 접속했으므로 webRTC 과정 시작가능
 });
+
+socket.on("offer", (offer) => {
+  /*
+  [Peer B에서 진행 - 나중에 접속한 사람 -]
+  1.
+  */
+  console.log(offer);
+});
+
+// RTC Code
+function makeConnection() {
+  myPeerConnection = new RTCPeerConnection();
+  myStream
+    .getTracks()
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
