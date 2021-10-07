@@ -22,5 +22,6 @@ html(lang="en")
                     select#cameras
                         option(value="device") Face Camera
                         option(value="device2") Face Camera2
+                    video#peerFace(autoplay, playsinline, width="400", height="400")
         script(src="/socket.io/socket.io.js")
         script(src="/public/js/app.js") 

@@ -132,6 +132,8 @@ socket.on("welcome", async () => {
   const offer = await myPeerConnection.createOffer();
   myPeerConnection.setLocalDescription(offer);
   socket.emit("offer", offer, roomName);
+  console.log("sent the offer");
+
   //또 다른 유저가 접속했으므로 webRTC 과정 시작가능
 });
 
@@ -145,10 +147,12 @@ socket.on("offer", async (offer) => {
   5. setLocalDescription(answer)
   6. send answer
   */
+  console.log("received the offer");
   myPeerConnection.setRemoteDescription(offer);
   const answer = await myPeerConnection.createAnswer();
   myPeerConnection.setLocalDescription(answer);
   socket.emit("answer", answer, roomName);
+  console.log("sent the answer");
 });
 
 socket.on("answer", (answer) => {
@@ -156,13 +160,48 @@ socket.on("answer", (answer) => {
     [PeerA가 PeerB로부터 answer를 받고 나서 진행 -처음 접속한 사람-]
     1. setRemoteDescription(answer)
   */
+  console.log("received the answer");
   myPeerConnection.setRemoteDescription(answer);
+});
+
+socket.on("ice", (ice) => {
+  console.log("received candidate");
+  myPeerConnection.addIceCandidate(ice);
 });
 
 // RTC Code
 function makeConnection() {
   myPeerConnection = new RTCPeerConnection();
+  //각 peer에서 서로 remoteDesciption에 offer와 answer를 추가해서 연결되면 icecandidate이벤트가 호출됨
+  myPeerConnection.addEventListener("icecandidate", handleIce);
+  /*
+    각 peer가 연결되고, candidate도 교환되면 addstream이벤트가 발생함.
+    addstream 이벤트에는 서로의 audio/video정보(stream)가 들어있음
+  */
+  myPeerConnection.addEventListener("addstream", handleAddStream);
   myStream
     .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
+
+/*
+  [RTC Ice Candidate]
+  브라우저가 서로 소통할 수 있게 해주는 방법. 중재하는 프로세스. 
+  어떤 소통방법이 가장 좋을지 제안할때 사용
+  다수의 candidate들이 각각의 connection으로부터 제안되고 상호 동의하에 하나가 선택됨
+*/
+function handleIce(data) {
+  /*
+  Ice Candidate를 상대방에게 전송
+  */
+  socket.emit("ice", data.candidate, roomName);
+  console.log("sent candidate");
+}
+
+function handleAddStream(data) {
+  /*
+    data : 상대방으로부터 받은 stream(audio/video 정보)가 있음. data.stream
+  */
+  const peerFace = document.getElementById("peerFace");
+  peerFace.srcObject = data.stream;
 }
