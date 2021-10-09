@@ -14,6 +14,7 @@ let muted = false;
 let cameraOff = false;
 let roomName;
 let myPeerConnection;
+let myDataChannel;
 
 async function getCameras() {
   try {
@@ -129,6 +130,14 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 // Socket Code
 socket.on("welcome", async () => {
   /*
+  모든 데이터를 문자열형식으로 주고 받을 수 있는 DataChannel 생성(채팅용)
+  DataChannel은 최초의 peer만 생성하면 됨.
+  다른 Peer들은 DataChannel이 있을때 event listener만 등록하면됨
+  */
+  myDataChannel = myPeerConnection.createDataChannel("chat");
+  myDataChannel.addEventListener("message", console.log);
+  console.log("made data channel");
+  /*
   [Peer A에서 진행 - 먼저 접속한 사람 -]
   1. getUserMedia()
   2. addStream() : 지금은 이거 대신 addTrack을 씀
@@ -145,6 +154,11 @@ socket.on("welcome", async () => {
 });
 
 socket.on("offer", async (offer) => {
+  myPeerConnection.addEventListener("datachannel", (event) => {
+    //PeerA가 생성하여 전송한 datachannel을 받아서 myDataChannel로 등록시킴
+    myDataChannel = event.channel;
+    myDataChannel.addEventListener("message", console.log);
+  });
   /*
   [Peer B에서 진행 - 나중에 접속한 사람 -]
   1. setRemoteDescription(offer)
