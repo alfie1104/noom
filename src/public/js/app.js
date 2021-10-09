@@ -178,7 +178,28 @@ socket.on("ice", (ice) => {
 
 // RTC Code
 function makeConnection() {
-  myPeerConnection = new RTCPeerConnection();
+  /*
+    //myPeerConnection = new RTCPeerConnection()
+    when myPeerConnection is set like upper,
+    if we don't exist in same wifi network,
+    the the each computer or phone can't find each others.
+    So to help them finding each other, we need to use STUN server. (To know the public address, STUN server is required)
+    Generally STUN server has to be made by service owner,
+    but in this practice, I will use Google's STUN server.
+  */
+  myPeerConnection = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: [
+          "stun:stun.l.google.com:19302",
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302",
+        ],
+      },
+    ],
+  });
   //각 peer에서 서로 remoteDesciption에 offer와 answer를 추가해서 연결되면 icecandidate이벤트가 호출됨
   myPeerConnection.addEventListener("icecandidate", handleIce);
   /*
